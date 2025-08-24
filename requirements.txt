@@ -1,0 +1,8 @@
+streamlit
+yfinance
+openai
+python-dotenv
+supabase
+requests
+beautifulsoup4
+lxml
