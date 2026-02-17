@@ -9,11 +9,12 @@ from config import TRACKED_SYMBOLS
 import time
 import os
 
-# Prefer .env.onadev for dev environments, fall back to .env
+# Load from .env.onadev or .env if present; in CI, env vars are injected directly
 env_file = Path(__file__).parent / ".env.onadev"
 if not env_file.exists():
     env_file = Path(__file__).parent / ".env"
-load_dotenv(env_file)
+if env_file.exists():
+    load_dotenv(env_file)
 
 client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
 
