@@ -1,18 +1,17 @@
 import yfinance as yf
 from supabase_client import supabase
-from config import PORTFOLIO_HOLDINGS, MARGIN_LOANS, FX_PAIRS
+from config import PORTFOLIO_HOLDINGS, MARGIN_LOANS
 
 
 def get_fx_rates():
-    """Fetch live FX rates (to USD) for all configured currency pairs."""
+    """Read FX rates from Supabase (updated daily by CI)."""
     rates = {"USD": 1.0}
-    for currency, pair in FX_PAIRS.items():
-        try:
-            hist = yf.Ticker(pair).history(period="1d")
-            if not hist.empty:
-                rates[currency] = hist['Close'].iloc[-1]
-        except Exception as e:
-            print(f"Error fetching FX rate for {currency}: {e}")
+    try:
+        response = supabase.table('fx_rates').select("currency, rate_to_usd").execute()
+        for row in response.data:
+            rates[row['currency']] = row['rate_to_usd']
+    except Exception as e:
+        print(f"Error reading FX rates from Supabase: {e}")
     return rates
 
 

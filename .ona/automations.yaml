@@ -7,6 +7,16 @@ tasks:
     triggeredBy:
       - postDevcontainerStart
 
+  update-fx-rates:
+    name: Update FX rates
+    description: Fetch latest FX rates from yfinance and store in Supabase.
+    command: |
+      python update_fx_rates.py
+    triggeredBy:
+      - manual
+    dependsOn:
+      - install-deps
+
   update-earnings:
     name: Update earnings data
     description: Fetch latest earnings data and AI summaries for tracked symbols.

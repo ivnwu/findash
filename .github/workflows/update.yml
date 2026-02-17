@@ -1,4 +1,4 @@
-name: Update Earnings Data
+name: Update Earnings & FX Data
 on:
   schedule:
     - cron: '0 9 * * Mon-Fri'
@@ -20,7 +20,13 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Run earnings updater
+      - name: Update FX rates
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+        run: python update_fx_rates.py
+
+      - name: Update earnings data
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
