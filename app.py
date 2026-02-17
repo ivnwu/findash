@@ -29,7 +29,7 @@ response = supabase.table('earnings_summaries') \
     .limit(10) \
     .execute()
 
-for row in response.
+for row in response.data:
     with st.expander(f"**{row['symbol']}** – {row['company_name']} ({str(row['earnings_date'])[:10]})"):
         st.markdown(f"**EPS Estimate**: ${row['eps_estimate'] or 'N/A'}")
         rev = row['revenue_estimate']

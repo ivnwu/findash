@@ -2,13 +2,18 @@ import yfinance as yf
 import requests
 from bs4 import BeautifulSoup
 from openai import OpenAI
+from pathlib import Path
 from dotenv import load_dotenv
 from supabase_client import supabase
 from config import TRACKED_SYMBOLS
 import time
 import os
 
-load_dotenv()
+# Prefer .env.onadev for dev environments, fall back to .env
+env_file = Path(__file__).parent / ".env.onadev"
+if not env_file.exists():
+    env_file = Path(__file__).parent / ".env"
+load_dotenv(env_file)
 
 client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
 
@@ -68,7 +73,7 @@ def save_summary(data):
         .eq('symbol', data['symbol']) \
         .execute()
 
-    if existing.
+    if existing.data:
         supabase.table('earnings_summaries') \
             .update(data) \
             .eq('symbol', data['symbol']) \

@@ -1,4 +1,5 @@
 .env
+.env.onadev
 __pycache__
 *.pyc
 venv/
