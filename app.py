@@ -19,7 +19,7 @@ with col1:
 with col2:
     if holdings:
         df = pd.DataFrame(holdings)
-        st.dataframe(df[['symbol', 'shares', 'current_price', 'value', 'gain_loss_pct']])
+        st.dataframe(df[['symbol', 'shares', 'currency', 'local_price', 'price_usd', 'value']])
 
 # --- Earnings Summaries ---
 st.header("🎙️ Recent Earnings Summaries")
