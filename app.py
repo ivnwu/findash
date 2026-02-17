@@ -10,16 +10,32 @@ st.markdown("**Your AI-powered financial dashboard**")
 
 # --- Portfolio Section ---
 st.header("📊 Portfolio Overview")
-total_value, holdings = get_portfolio_value()
+nav, gross_value, holdings, loans, fx_rates = get_portfolio_value()
 
-col1, col2 = st.columns([1, 2])
+col1, col2, col3 = st.columns(3)
 with col1:
-    st.metric("Net Asset Value", f"${total_value:,.2f}")
-
+    st.metric("Net Asset Value", f"${nav:,.2f}")
 with col2:
-    if holdings:
-        df = pd.DataFrame(holdings)
-        st.dataframe(df[['symbol', 'shares', 'currency', 'local_price', 'price_usd', 'value']])
+    st.metric("Gross Portfolio", f"${gross_value:,.2f}")
+with col3:
+    total_loans = sum(l['amount_usd'] for l in loans)
+    st.metric("Margin Loans", f"${total_loans:,.2f}")
+
+# FX rates
+if fx_rates:
+    rate_strs = [f"{k}/USD: {v:.4f}" for k, v in fx_rates.items() if k != "USD"]
+    st.caption("FX Rates: " + " | ".join(rate_strs))
+
+# Holdings table
+if holdings:
+    df = pd.DataFrame(holdings)
+    st.dataframe(df[['symbol', 'shares', 'currency', 'local_price', 'fx_rate', 'price_usd', 'value']])
+
+# Margin loan details
+if loans:
+    st.subheader("Margin Loans")
+    df_loans = pd.DataFrame(loans)
+    st.dataframe(df_loans[['label', 'currency', 'amount_local', 'fx_rate', 'amount_usd']])
 
 # --- Earnings Summaries ---
 st.header("🎙️ Recent Earnings Summaries")
