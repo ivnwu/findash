@@ -1,35 +1,22 @@
 # findash 💼
 
-**Your AI-powered financial dashboard.**  
-Automatically tracks your portfolio value and summarizes earnings calls using AI.
+AI-powered financial dashboard. Tracks multi-currency portfolio value, margin loans, and earnings call summaries.
 
----
+## Features
 
-## 🚀 Features
+- Portfolio NAV with multi-currency support (USD, HKD, SGD)
+- Live FX rates stored in Supabase, updated daily via GitHub Actions
+- Margin loan tracking with FX conversion
+- AI-generated earnings call summaries (GPT-4)
+- Streamlit web dashboard
 
-- ✅ **Net Asset Value (NAV)** of your portfolio
-- ✅ **AI-generated summaries** of earnings call transcripts
-- ✅ **Auto-updated daily** via GitHub Actions
-- ✅ **Web-based dashboard** (runs on Render, Railway, or Streamlit)
+## Setup
 
----
+### 1. Supabase
 
-## 🔧 Setup Guide
+Create a project at [supabase.com](https://supabase.com) and run this SQL:
 
-### 1. Create a Supabase Project
-- Go to [https://supabase.com](https://supabase.com)
-- Create a new project
-- Get your **API URL** and **Anonymous Key**
-
-#### Run This SQL:
-\`\`\`sql
-CREATE TABLE portfolio (
-  id SERIAL PRIMARY KEY,
-  symbol TEXT NOT NULL,
-  shares NUMERIC NOT NULL,
-  purchase_price NUMERIC
-);
-
+```sql
 CREATE TABLE earnings_summaries (
   id SERIAL PRIMARY KEY,
   symbol TEXT NOT NULL,
@@ -40,34 +27,57 @@ CREATE TABLE earnings_summaries (
   transcript_summary TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
-\`\`\`
 
----
+CREATE TABLE fx_rates (
+  id SERIAL PRIMARY KEY,
+  currency TEXT NOT NULL UNIQUE,
+  pair TEXT NOT NULL,
+  rate_to_usd NUMERIC NOT NULL,
+  updated_date TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+```
 
 ### 2. Clone & Configure
-\`\`\`bash
-git clone https://github.com/yourusername/findash.git
+
+```bash
+git clone https://github.com/ivnwu/findash.git
 cd findash
 cp .env.example .env
-# Edit .env with your keys
-\`\`\`
+# Edit .env with your Supabase URL, Supabase anon key, and OpenAI API key
+```
 
 ### 3. Install & Run
-\`\`\`bash
-python -m venv venv
-source venv/bin/activate
+
+```bash
 pip install -r requirements.txt
 streamlit run app.py
-\`\`\`
+```
 
-### 4. Deploy to Render
-- Push to GitHub
-- Deploy as Web Service
-- Add secrets
+### 4. GitHub Actions
 
-### 5. Enable GitHub Actions
-Add your API keys in GitHub Secrets.
+The workflow runs weekdays at 9am UTC and can be triggered manually. It:
 
----
+1. Updates FX rates (HKD/USD, SGD/USD) from yfinance into Supabase
+2. Fetches earnings data, scrapes transcripts, summarizes via GPT-4, and stores in Supabase
 
-**Made with ❤️ for busy tech professionals.**
+Add these as repository secrets (**Settings → Secrets → Actions**):
+
+- `SUPABASE_URL`
+- `SUPABASE_KEY` (anon public key, starts with `eyJ`)
+- `OPENAI_API_KEY`
+
+### 5. Portfolio Configuration
+
+Edit `config.py` to set your holdings, margin loans, and tracked symbols. HKEX stocks use the `.HK` suffix (e.g., `9988.HK`). FX pairs are defined in `FX_PAIRS`.
+
+## Project Structure
+
+| File | Purpose |
+|---|---|
+| `app.py` | Streamlit dashboard |
+| `portfolio.py` | Portfolio valuation, reads FX rates from Supabase |
+| `config.py` | Holdings, margin loans, FX pairs, tracked symbols |
+| `update_fx_rates.py` | Fetches FX rates from yfinance, stores in Supabase |
+| `update_earnings.py` | Fetches earnings data, generates AI summaries |
+| `supabase_client.py` | Supabase client initialization |
