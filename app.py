@@ -10,7 +10,7 @@ st.markdown("**Your AI-powered financial dashboard**")
 
 # --- Portfolio Section ---
 st.header("📊 Portfolio Overview")
-nav, gross_value, holdings, loans, fx_rates = get_portfolio_value()
+nav, gross_value, holdings, loans, fx_rates, fx_updated, prices_updated = get_portfolio_value()
 
 col1, col2, col3 = st.columns(3)
 with col1:
@@ -21,10 +21,15 @@ with col3:
     total_loans = sum(l['amount_usd'] for l in loans)
     st.metric("Margin Loans", f"${total_loans:,.2f}")
 
-# FX rates
-if fx_rates:
+# Data freshness and FX rates
+info_parts = []
+if prices_updated:
+    info_parts.append(f"Prices as of: {prices_updated}")
+if fx_updated:
     rate_strs = [f"{k}/USD: {v:.4f}" for k, v in fx_rates.items() if k != "USD"]
-    st.caption("FX Rates: " + " | ".join(rate_strs))
+    info_parts.append(f"FX rates as of: {fx_updated} ({' | '.join(rate_strs)})")
+if info_parts:
+    st.caption(" · ".join(info_parts))
 
 # Holdings table
 if holdings:

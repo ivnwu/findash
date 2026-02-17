@@ -26,6 +26,12 @@ jobs:
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
         run: python update_fx_rates.py
 
+      - name: Update asset prices
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+        run: python update_prices.py
+
       - name: Update earnings data
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}

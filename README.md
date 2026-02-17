@@ -5,7 +5,8 @@ AI-powered financial dashboard. Tracks multi-currency portfolio value, margin lo
 ## Features
 
 - Portfolio NAV with multi-currency support (USD, HKD, SGD)
-- Live FX rates stored in Supabase, updated daily via GitHub Actions
+- Daily close prices and FX rates stored in Supabase, updated via GitHub Actions
+- Dashboard shows when prices and FX rates were last updated
 - Margin loan tracking with FX conversion
 - AI-generated earnings call summaries (GPT-4)
 - Streamlit web dashboard
@@ -36,6 +37,14 @@ CREATE TABLE fx_rates (
   updated_date TEXT NOT NULL,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+CREATE TABLE asset_prices (
+  id SERIAL PRIMARY KEY,
+  symbol TEXT NOT NULL UNIQUE,
+  close_price NUMERIC NOT NULL,
+  updated_date TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
 ```
 
 ### 2. Clone & Configure
@@ -59,7 +68,8 @@ streamlit run app.py
 The workflow runs weekdays at 9am UTC and can be triggered manually. It:
 
 1. Updates FX rates (HKD/USD, SGD/USD) from yfinance into Supabase
-2. Fetches earnings data, scrapes transcripts, summarizes via GPT-4, and stores in Supabase
+2. Updates daily close prices for all portfolio holdings into Supabase
+3. Fetches earnings data, scrapes transcripts, summarizes via GPT-4, and stores in Supabase
 
 Add these as repository secrets (**Settings → Secrets → Actions**):
 
@@ -76,8 +86,9 @@ Edit `config.py` to set your holdings, margin loans, and tracked symbols. HKEX s
 | File | Purpose |
 |---|---|
 | `app.py` | Streamlit dashboard |
-| `portfolio.py` | Portfolio valuation, reads FX rates from Supabase |
+| `portfolio.py` | Portfolio valuation, reads prices and FX rates from Supabase |
 | `config.py` | Holdings, margin loans, FX pairs, tracked symbols |
+| `update_prices.py` | Fetches daily close prices from yfinance, stores in Supabase |
 | `update_fx_rates.py` | Fetches FX rates from yfinance, stores in Supabase |
 | `update_earnings.py` | Fetches earnings data, generates AI summaries |
 | `supabase_client.py` | Supabase client initialization |

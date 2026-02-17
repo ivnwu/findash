@@ -1,48 +1,67 @@
-import yfinance as yf
 from supabase_client import supabase
 from config import PORTFOLIO_HOLDINGS, MARGIN_LOANS
 
 
 def get_fx_rates():
-    """Read FX rates from Supabase (updated daily by CI)."""
+    """Read FX rates and their update date from Supabase."""
     rates = {"USD": 1.0}
+    fx_updated = None
     try:
-        response = supabase.table('fx_rates').select("currency, rate_to_usd").execute()
+        response = supabase.table('fx_rates') \
+            .select("currency, rate_to_usd, updated_date") \
+            .execute()
         for row in response.data:
             rates[row['currency']] = row['rate_to_usd']
+            if row.get('updated_date'):
+                fx_updated = row['updated_date']
     except Exception as e:
         print(f"Error reading FX rates from Supabase: {e}")
-    return rates
+    return rates, fx_updated
+
+
+def get_asset_prices():
+    """Read daily close prices and their update date from Supabase."""
+    prices = {}
+    prices_updated = None
+    try:
+        response = supabase.table('asset_prices') \
+            .select("symbol, close_price, updated_date") \
+            .execute()
+        for row in response.data:
+            prices[row['symbol']] = row['close_price']
+            if row.get('updated_date'):
+                prices_updated = row['updated_date']
+    except Exception as e:
+        print(f"Error reading asset prices from Supabase: {e}")
+    return prices, prices_updated
 
 
 def get_portfolio_value():
-    fx_rates = get_fx_rates()
+    fx_rates, fx_updated = get_fx_rates()
+    prices, prices_updated = get_asset_prices()
     total_value = 0
     detailed = []
 
     for h in PORTFOLIO_HOLDINGS:
-        ticker = yf.Ticker(h['symbol'])
-        try:
-            hist = ticker.history(period="1d")
-            if hist.empty:
-                continue
-            local_price = hist['Close'].iloc[-1]
-            currency = h.get('currency', 'USD')
-            fx_rate = fx_rates.get(currency, 1.0)
-            price_usd = local_price * fx_rate
-            value_usd = price_usd * h['shares']
-            total_value += value_usd
-            detailed.append({
-                'symbol': h['symbol'],
-                'shares': h['shares'],
-                'currency': currency,
-                'local_price': round(local_price, 2),
-                'fx_rate': round(fx_rate, 6),
-                'price_usd': round(price_usd, 2),
-                'value': round(value_usd, 2),
-            })
-        except Exception as e:
-            print(f"Error fetching {h['symbol']}: {e}")
+        symbol = h['symbol']
+        local_price = prices.get(symbol)
+        if local_price is None:
+            print(f"No price data for {symbol}")
+            continue
+        currency = h.get('currency', 'USD')
+        fx_rate = fx_rates.get(currency, 1.0)
+        price_usd = local_price * fx_rate
+        value_usd = price_usd * h['shares']
+        total_value += value_usd
+        detailed.append({
+            'symbol': symbol,
+            'shares': h['shares'],
+            'currency': currency,
+            'local_price': round(local_price, 2),
+            'fx_rate': round(fx_rate, 6),
+            'price_usd': round(price_usd, 2),
+            'value': round(value_usd, 2),
+        })
 
     # Subtract margin loans
     total_loans_usd = 0
@@ -61,4 +80,4 @@ def get_portfolio_value():
         })
 
     nav = round(total_value - total_loans_usd, 2)
-    return nav, round(total_value, 2), detailed, loan_details, fx_rates
+    return nav, round(total_value, 2), detailed, loan_details, fx_rates, fx_updated, prices_updated

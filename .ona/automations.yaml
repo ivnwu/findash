@@ -17,6 +17,16 @@ tasks:
     dependsOn:
       - install-deps
 
+  update-prices:
+    name: Update asset prices
+    description: Fetch daily close prices from yfinance and store in Supabase.
+    command: |
+      python update_prices.py
+    triggeredBy:
+      - manual
+    dependsOn:
+      - install-deps
+
   update-earnings:
     name: Update earnings data
     description: Fetch latest earnings data and AI summaries for tracked symbols.
