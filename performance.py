@@ -124,14 +124,14 @@ def get_performance(user_id: int, period: str) -> pd.DataFrame | None:
     if len(portfolio_value) < 2:
         return None
 
-    # Index to 100
+    # Percentage change from period start
     result = pd.DataFrame(index=portfolio_value.index)
-    result["Portfolio"] = portfolio_value / portfolio_value.iloc[0] * 100
+    result["Portfolio"] = (portfolio_value / portfolio_value.iloc[0] - 1) * 100
 
     for sym in benchmark_symbols:
         if sym in prices.columns:
             series = prices[sym].reindex(result.index).ffill().bfill()
             if series.iloc[0] > 0:
-                result[BENCHMARK_SYMBOLS[sym]] = series / series.iloc[0] * 100
+                result[BENCHMARK_SYMBOLS[sym]] = (series / series.iloc[0] - 1) * 100
 
     return result
