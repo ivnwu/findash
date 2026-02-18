@@ -2,7 +2,7 @@ import yfinance as yf
 from pathlib import Path
 from dotenv import load_dotenv
 from supabase_client import supabase
-from config import PORTFOLIO_HOLDINGS
+from config import BENCHMARK_SYMBOLS, FX_PAIRS
 from datetime import datetime, timezone
 
 # Load from .env.onadev or .env if present; in CI, env vars are injected directly
@@ -13,11 +13,24 @@ if env_file.exists():
     load_dotenv(env_file)
 
 
+def _upsert_price(symbol: str, close_price: float, date_str: str):
+    """Insert or update a single (symbol, date) price row."""
+    supabase.table("asset_prices").upsert(
+        {"symbol": symbol, "close_price": close_price, "updated_date": date_str},
+        on_conflict="symbol,updated_date",
+    ).execute()
+
+
 def update_prices():
     print("Starting price update...")
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
 
-    symbols = list({h['symbol'] for h in PORTFOLIO_HOLDINGS})
+    # Collect unique symbols across all users + benchmarks + FX pairs
+    response = supabase.table("user_holdings").select("symbol").execute()
+    symbols = list({row["symbol"] for row in response.data})
+    symbols.extend(BENCHMARK_SYMBOLS.keys())
+    symbols.extend(FX_PAIRS.values())
+    symbols = list(set(symbols))
 
     for symbol in symbols:
         try:
@@ -25,29 +38,8 @@ def update_prices():
             if hist.empty:
                 print(f"No data for {symbol}")
                 continue
-            close_price = float(hist['Close'].iloc[-1])
-
-            existing = supabase.table('asset_prices') \
-                .select("id") \
-                .eq('symbol', symbol) \
-                .execute()
-
-            data = {
-                'symbol': symbol,
-                'close_price': close_price,
-                'updated_date': today,
-            }
-
-            if existing.data:
-                supabase.table('asset_prices') \
-                    .update(data) \
-                    .eq('symbol', symbol) \
-                    .execute()
-            else:
-                supabase.table('asset_prices') \
-                    .insert(data) \
-                    .execute()
-
+            close_price = float(hist["Close"].iloc[-1])
+            _upsert_price(symbol, close_price, today)
             print(f"Updated {symbol}: {close_price:.2f}")
         except Exception as e:
             print(f"Error updating {symbol}: {e}")
