@@ -4,20 +4,12 @@ FX_PAIRS = {
     "SGD": "SGDUSD=X",
 }
 
-# Portfolio holdings
-# currency: "USD" (default), "HKD", or "SGD"
-PORTFOLIO_HOLDINGS = [
-    {"symbol": "BABA", "shares": 1000, "currency": "USD"},
-    {"symbol": "9988.HK", "shares": 15200, "currency": "HKD"},
-    {"symbol": "BRK-B", "shares": 300, "currency": "USD"},
-    {"symbol": "KWEB", "shares": 1100, "currency": "USD"},
-    {"symbol": "0823.HK", "shares": 160525, "currency": "HKD"},
-]
-
-# Margin loans (amount in local currency)
-MARGIN_LOANS = [
-    {"currency": "SGD", "amount": 594000, "label": "SGD Margin Loan"},
-]
-
 # Companies to track for earnings
 TRACKED_SYMBOLS = ["BABA", "BRK-B", "KWEB"]
+
+# Benchmark indices stored alongside portfolio holdings in asset_prices
+BENCHMARK_SYMBOLS = {
+    "^HSI": "Hang Seng Index",
+    "^GSPC": "S&P 500",
+    "URTH": "MSCI World (ETF)",
+}

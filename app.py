@@ -1,16 +1,24 @@
 import streamlit as st
 from portfolio import get_portfolio_value
+from performance import get_performance, PERIOD_DAYS
+from auth import login_page, logout_button, get_current_user_id
 from supabase_client import supabase
 import pandas as pd
 
-st.set_page_config(page_title="💼 findash", layout="wide")
-st.title("💼 findash")
+st.set_page_config(page_title="finlive", layout="wide")
 
-st.markdown("**Your AI-powered financial dashboard**")
+# --- Authentication gate ---
+if not login_page():
+    st.stop()
+
+logout_button()
+user_id = get_current_user_id()
+
+st.title("finlive")
 
 # --- Portfolio Section ---
-st.header("📊 Portfolio Overview")
-nav, gross_value, holdings, loans, fx_rates, fx_updated, prices_updated = get_portfolio_value()
+st.header("Portfolio Overview")
+nav, gross_value, holdings, loans, fx_rates, fx_updated, prices_updated = get_portfolio_value(user_id)
 
 col1, col2, col3 = st.columns(3)
 with col1:
@@ -42,8 +50,17 @@ if loans:
     df_loans = pd.DataFrame(loans)
     st.dataframe(df_loans[['label', 'currency', 'amount_local', 'fx_rate', 'amount_usd']])
 
+# --- Performance Chart ---
+st.header("Performance")
+period = st.radio("Period", list(PERIOD_DAYS.keys()), horizontal=True, index=3)
+perf_df = get_performance(user_id, period)
+if perf_df is not None and len(perf_df) >= 2:
+    st.line_chart(perf_df)
+else:
+    st.info("Not enough historical price data. Run the backfill workflow to populate history.")
+
 # --- Earnings Summaries ---
-st.header("🎙️ Recent Earnings Summaries")
+st.header("Recent Earnings Summaries")
 response = supabase.table('earnings_summaries') \
     .select("*") \
     .order('earnings_date', desc=True) \
