@@ -1,5 +1,8 @@
 # findash 💼
 
+
+> **Contributors:** [givan8](https://github.com/givan8) · [givan807](https://github.com/givan807)
+
 AI-powered financial dashboard. Tracks multi-currency portfolio value, margin loans, and earnings call summaries.
 
 ## Features
